@@ -1,55 +1,59 @@
 ﻿using BookWebApi.Data;
 using BookWebApi.Models;
+using BookWebApi.Repositories;
 using Microsoft.EntityFrameworkCore;
 using static System.Reflection.Metadata.BlobBuilder;
 
 namespace BookWebApi.Services
 {
-    public class BookService:IBookService
+    public class BookService : IBookService
     {
-        private readonly BookDbContext _context;
+        private readonly IBookRepository _repo; // 👈 Inject Repository instead of DbContext
 
-        public BookService(BookDbContext context)
+        public BookService(IBookRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         public async Task<List<Book>> GetAllAsync()
         {
-            return await _context.Books.ToListAsync();
+            return await _repo.GetStudentAllAsync();
         }
 
-        public async Task<Book> GetByIdAsync(int id)
+        public async Task<Book?> GetByIdAsync(int id)
         {
-            return await _context.Books.FindAsync(id);
+            return await _repo.GetStudentByIdAsync(id);
         }
 
-        public async Task<Book> CreateAsync(Book book)
+        public async Task<Book?> CreateAsync(Book book)
         {
-            _context.Books.Add(book);
-
-            await _context.SaveChangesAsync();
-
-            return book;
+            return await _repo.CreateStudentAsync(book);
         }
 
-        public async Task UpdateAsync(Book book)
+        public async Task<Book> UpdateAsync(int id, Book book)
         {
-            _context.Books.Update(book);
+            var existing = await _repo.GetStudentByIdAsync(id);
+            if (existing == null)
+                return null;
+        
 
-            await _context.SaveChangesAsync();
+            
+            existing.Title = book.Title;
+            existing.Description = book.Description;
+            existing.Author = book.Author;
+            existing.Country = book.Country;
+
+            return await _repo.UpdateStudentAsync(existing);
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
-            var book = await _context.Books.FindAsync(id);
+            var existing = await _repo.GetStudentByIdAsync(id);
+            if (existing == null)
+                return false;
 
-            if (book != null)
-            {
-                _context.Books.Remove(book);
-
-                await _context.SaveChangesAsync();
-            }
+            await _repo.DeleteStudentAsync(id);
+            return true;
         }
     }
 }

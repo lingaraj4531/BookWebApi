@@ -1,10 +1,12 @@
 ﻿using BookWebApi.Models;
 using BookWebApi.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BookWebApi.Controllers
 {
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BooksController : ControllerBase
@@ -48,11 +50,12 @@ namespace BookWebApi.Controllers
         {
             book.Id = id;
 
-            await _service.UpdateAsync(book);
+            await _service.UpdateAsync(id,book);
 
             return NoContent();
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
